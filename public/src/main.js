@@ -8,8 +8,13 @@ import { EffectComposer } from '/jsm/postprocessing/EffectComposer.js';
 import { FXAAShader } from '/jsm/shaders/FXAAShader.js';
 import { ShaderPass } from '/jsm/postprocessing/ShaderPass.js';
 import { SSAARenderPass } from '/jsm/postprocessing/SSAARenderPass.js';
+import { Sky } from '/jsm/objects/Sky.js';
+import { FlakesTexture } from '/jsm/textures/FlakesTexture.js';
+
 
 const container = document.querySelector('#scene-container');
+
+
 
 const width = window.innerWidth || 1;
 const height = window.innerHeight || 1;
@@ -19,10 +24,13 @@ const devicePixelRatio = window.devicePixelRatio || 1;
 const renderer = new THREE.WebGLRenderer();
 renderer.setPixelRatio(devicePixelRatio);
 renderer.setSize(width, height);
+// renderer.outputEncoding = THREE.sRGBEncoding;
+// renderer.toneMapping = THREE.ACESFilmicToneMapping;
+// renderer.toneMappingExposure = 1;
 
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-camera.position.z = 2;
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+camera.position.set( -90, 0, 0 );
 
 
 console.log("INNER WIDTH", window.innerWidth);
@@ -44,6 +52,40 @@ console.log("PIXEL RATIO", pixelRatio)
 // var uniforms = fxaaPass.material.uniforms;
 fxaaPass.uniforms['resolution'].value.x = 1 / (window.innerWidth * (pixelRatio));
 fxaaPass.uniforms['resolution'].value.y = 1 / (window.innerWidth * (pixelRatio));
+
+const sky = new Sky();
+sky.scale.setScalar(4000000);
+// scene.add(sky);
+
+const sun = new THREE.Vector3();
+
+const effectController = {
+    turbidity: 0.1,
+    rayleigh: 3,
+    mieCoefficient: 0.005,
+    mieDirectionalG: 0.7,
+    inclination: 0.49, // elevation / inclination
+    azimuth: 0.25, // Facing front,
+    exposure: 0.01
+};
+
+const uniforms = sky.material.uniforms;
+uniforms["turbidity"].value = effectController.turbidity;
+uniforms["rayleigh"].value = effectController.rayleigh;
+uniforms["mieCoefficient"].value = effectController.mieCoefficient;
+uniforms["mieDirectionalG"].value = effectController.mieDirectionalG;
+
+
+const theta = Math.PI * (effectController.inclination - 0.5);
+const phi = 2 * Math.PI * (effectController.azimuth - 0.5);
+
+sun.x = Math.cos(phi);
+sun.y = Math.sin(phi) * Math.sin(theta);
+sun.z = Math.sin(phi) * Math.cos(theta);
+
+uniforms["sunPosition"].value.copy(sun);
+
+renderer.toneMappingExposure = effectController.exposure;
 
 const loader = new GLTFLoader();
 
@@ -75,6 +117,28 @@ const ssaaRenderPass = new SSAARenderPass(scene, camera);
 composer.addPass(ssaaRenderPass);
 composer.addPass(bloomPass);
 
+const normalMap3 = new THREE.CanvasTexture(new FlakesTexture());
+normalMap3.wrapS = THREE.RepeatWrapping;
+normalMap3.wrapT = THREE.RepeatWrapping;
+normalMap3.repeat.x = 10;
+normalMap3.repeat.y = 6;
+normalMap3.anisotropy = 16;
+
+const pmremGenerator = new THREE.PMREMGenerator( renderer );
+
+
+scene.environment = pmremGenerator.fromScene(sky).texture;
+
+const geometry = new THREE.BoxGeometry(30, 30, 30);
+const material = new THREE.MeshStandardMaterial({ roughness: 0 });
+
+const mesh = new THREE.Mesh(geometry, material);
+
+
+const stats = Stats();
+document.body.appendChild(stats.dom);
+// scene.add(mesh);
+
 
 loader.load('assets/retrowave loop.glb', function (gltf) {
 
@@ -103,8 +167,6 @@ window.addEventListener('resize', () => {
     render();
 }, false);
 
-const stats = Stats();
-document.body.appendChild(stats.dom);
 
 var animate = function () {
     requestAnimationFrame(animate);
