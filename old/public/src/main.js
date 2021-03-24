@@ -134,7 +134,6 @@ const material = new THREE.MeshStandardMaterial({ roughness: 0 });
 
 const mesh = new THREE.Mesh(geometry, material);
 
-
 const stats = Stats();
 document.body.appendChild(stats.dom);
 // scene.add(mesh);

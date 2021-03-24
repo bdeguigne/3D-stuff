@@ -1,0 +1,33 @@
+*
+{
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body
+{
+    font-family: 'Oswald', sans-serif;
+    height: 100vh;
+    background-color: white;
+    color: white;
+}
+
+.webgl
+{
+    position: fixed;
+    top: 0;
+    left: 0;
+    outline: none;
+}
+
+.content{
+    position: absolute;
+    bottom: 0;
+    right: 0;
+}
+
+.sound {
+}
+
+/*# sourceMappingURL=main.css.map*/

@@ -7,9 +7,10 @@
 html,
 body
 {
+    font-family: 'Oswald', sans-serif;
     height: 100vh;
-    font-family: 'Poppins';
     background-color: white;
+    color: white;
 }
 
 .webgl
@@ -18,4 +19,13 @@ body
     top: 0;
     left: 0;
     outline: none;
+}
+
+.content{
+    position: absolute;
+    bottom: 0;
+    right: 0;
+}
+
+.sound {
 }
